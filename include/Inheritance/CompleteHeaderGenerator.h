@@ -75,7 +75,10 @@ namespace ScriptUtils { namespace Inheritance
 			}
 
 			// Indent the outputted script string by two-tabs: one for the namespace indent, one for the function
-			this->SetIndentLevel(2);
+			if (!namespaces.empty())
+				this->SetIndentLevel(2);
+			else // no namespace scope - no namespace indent
+				this->SetIndentLevel(1);
 
 			// init the code generation (also adds 'const char *script = ')
 			ProxyGenerator::init();
