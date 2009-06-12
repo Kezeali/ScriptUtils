@@ -194,6 +194,11 @@ namespace ScriptUtils { namespace Calling
 			return _ok;
 		}
 
+		virtual bool refresh()
+		{
+			return check_asreturn( _ctx->Prepare(_funcId) );
+		}
+
 		//! Sets the object for this caller (if it wasn't set before, or needs to be changed)
 		bool set_object(asIScriptObject *obj)
 		{
