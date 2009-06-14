@@ -36,7 +36,7 @@ namespace ScriptUtils { namespace Inheritance
 
 		void Generate()
 		{
-			for(split_iter it = boost::make_find_iterator(str1, first_finder("begat", is_iequal()));
+			for(split_iter it = boost::make_find_iterator(str1, first_finder(",", is_iequal()));
 				it != split_iter(); ++it)
 			{
 				cout << copy_range<std::string>(*It) << endl;

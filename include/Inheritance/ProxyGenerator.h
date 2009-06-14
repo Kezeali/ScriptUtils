@@ -18,7 +18,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
-//#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string.hpp>
 
 
 namespace ScriptUtils { namespace Inheritance
@@ -409,32 +409,48 @@ namespace ScriptUtils { namespace Inheritance
 			std::string::size_type decl_pos = decl.find('(') + 1, token_pos;
 
 			// Check for reference return type (script methods can't return references)
-			//  and convert them to handles - i.e. '&' to '@'
+			//  and if the return type is a reference-counted type:
+			//   convert them to handles - i.e. '&' to '@';
+			//  or if the return type is a value type:
+			//   remove the reference modifiers all-together - i.e. 'const' and '&' are removed.
 			std::string::size_type refmodifierPos = decl.find('&');
 
 			if (decl_pos != std::string::npos && refmodifierPos != std::string::npos &&
 				refmodifierPos < decl_pos)
 			{
-				// Add the return type identifier, replacing the '&' modifier
-				expandedDecl << decl.substr(0, refmodifierPos) << "@";
+				std::string returnTypeDecl = decl.substr(0, decl_pos-1);
+				if (!isValueType(returnTypeDecl, &returnTypeDecl))
+				{
+					// For reference types:
+					// Add the return type identifier, replacing the '&' modifier
+					expandedDecl << decl.substr(0, refmodifierPos) << "@";
+				}
+				else
+				{
+					// For value types:
+					// isValueType puts the raw, unmodified type into the second param (returnTypeDecl in this case)
+					//  So the following line effectively removes the type modifiers from the return-type decl
+					expandedDecl << returnTypeDecl;
+				}
+
 				// Add some or all of the rest of the decl (depening on whether it has params)
 				if (decl[decl_pos] != ')')
 				{
 					expandedDecl << decl.substr(refmodifierPos + 1, decl_pos-(refmodifierPos+1));
 				}
-				else // If the next character after the '(' found above is a closing ')', decl has no params
+				else // If the next character after the '(' is a closing ')', decl has no params
 				{
 					expandedDecl << decl.substr(refmodifierPos + 1);
 					return expandedDecl.str();
 				}
 			}
-			else
+			else // the return-type wasn't a reference type: add the return type & function name normally
 			{
 				if (decl[decl_pos] == ')') // decl has no params
 					return decl;
 
 				// Push everything up to the beginning of the params
-				//  (e.g. 'void myfunc(') into the stream
+				//  - e.g. 'void myfunc(' - into the stream
 				expandedDecl << decl.substr(0, decl_pos);
 			}
 
@@ -531,6 +547,45 @@ namespace ScriptUtils { namespace Inheritance
 			}
 
 			return expandedDecl.str();
+		}
+
+		//! Removes & and const & from the given type decl.
+		std::string removeReferenceModifiers(const std::string &type_decl)
+		{
+			std::string::size_type constPos = type_decl.find("const ");
+			std::string::size_type modPos = type_decl.find("&");
+
+			if (modPos != std::string::npos)
+			{
+				// Substring starts from char-6 (6 is strlen('const ')) if a const ident. was found,
+				//  otherwise it starts at zero
+				std::string::size_type beginning = (constPos != std::string::npos) ? 6 : 0;
+				std::string typeNomods = type_decl.substr(beginning , modPos-beginning);
+				boost::trim(typeNomods);
+				return typeNomods;
+			}
+			else
+				return type_decl;
+		}
+
+		bool isValueType(const std::string &return_type_decl, std::string *type_without_mods = NULL)
+		{
+			std::string typeNomods = removeReferenceModifiers( return_type_decl );
+
+			int typeId = _engine->GetTypeIdByDecl(typeNomods.c_str());
+			if (typeId < 0)
+				return false;
+
+			asIObjectType *type = _engine->GetObjectTypeById(typeId);
+			if (type->GetSize() > 0)
+			{
+				if (type_without_mods != NULL)
+					*type_without_mods = typeNomods;
+
+				return true;
+			}
+			else
+				return false;
 		}
 
 		//! Creates a list of asIObjectType objects which describes the comma seperated list given

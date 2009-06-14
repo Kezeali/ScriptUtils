@@ -260,6 +260,16 @@ namespace ScriptUtils { namespace Calling
 		//	_ctx->SetExceptionCallback(fn, obj, asCALL_THISCALL);
 		//}
 
+		//! Sets the given arg
+		/*!
+		* Use when args need to be set iteratively - otherwise use Caller#operator().
+		*/
+		template <typename T>
+		void set_arg(asUINT arg, T t)
+		{
+			new (_ctx->GetArgPointer(arg)) CallHelper<T>(t);
+		}
+
 	protected:
 		//! Called after each script line is executed
 		line_signal_ptr OnLineCallback;
@@ -302,12 +312,6 @@ namespace ScriptUtils { namespace Calling
 		void * return_address(void)
 		{
 			return _ctx->GetAddressOfReturnValue();
-		}
-
-		template <typename T>
-		void set_arg(asUINT arg, T t)
-		{
-			new (_ctx->GetArgPointer(arg)) CallHelper<T>(t);
 		}
 
 		// Sets _ok to false if the result of an AngelScript fn. indicates an error

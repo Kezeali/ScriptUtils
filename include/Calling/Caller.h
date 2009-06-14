@@ -99,16 +99,18 @@ namespace ScriptUtils { namespace Calling
 		* \todo ?ConversionException for return conversion errors - if conversion checking / callbacks are implimented
 		*/
 		template <typename R>
-		R operator()(void)
+		R call(void)
 		{
 			execute();
 			return static_cast< CallHelper<R>* >(return_address())->element;
 		}
 
-		//! Used when no return type is specified
+		//! Function-style call
 		/*
 		* Returns pointer to return address. This is null if the
 		* script function returns void.
+		*
+		* \todo Return 'ScriptReturn' object, with a 'convert<Type>()' method
 		*/
 		void* operator()(void)
 		{
@@ -138,7 +140,7 @@ namespace ScriptUtils { namespace Calling
 #define n BOOST_PP_ITERATION()
 
 		template <typename R, BOOST_PP_ENUM_PARAMS_Z(1 ,n, typename A)>
-		R operator() (BOOST_PP_ENUM_BINARY_PARAMS_Z(1, n, A ,a))
+		R call(BOOST_PP_ENUM_BINARY_PARAMS_Z(1, n, A ,a))
 		{
 			// Calls set_arg(n, an) for each 'n'
 			//  ~ does nothing, just junk arg
