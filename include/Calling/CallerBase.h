@@ -63,7 +63,7 @@ namespace ScriptUtils { namespace Calling
 		* Constructs an invalid Caller - only provided for container support
 		*/
 		CallerBase()
-			: _ok(false), _funcId(-1), _ctx(NULL),
+			: _ok(false), _obj(NULL), _funcId(-1), _ctx(NULL),
 			_throwOnException(false),
 			OnScriptException(new exception_signal),
 			OnLineCallback(new line_signal)
@@ -72,7 +72,7 @@ namespace ScriptUtils { namespace Calling
 
 		//! Constructor for object methods
 		CallerBase(asIScriptObject * obj, const char * decl)
-			: _decl(decl), _ok(true),
+			: _obj(obj), _decl(decl), _ok(true),
 			_throwOnException(false),
 			OnScriptException(new exception_signal),
 			OnLineCallback(new line_signal)
@@ -85,15 +85,19 @@ namespace ScriptUtils { namespace Calling
 			_funcId = type->GetMethodIdByDecl(decl);
 			check_asreturn(_funcId);
 
+			// Can't prepare object method if we aren't sure it will be executed
+			//  - a prepared contexts delete the objects when they are released 
+			//  (I think this is a bug)
 			check_asreturn( _ctx->Prepare(_funcId) );
-			check_asreturn( _ctx->SetObject(obj) );
+			check_asreturn( _ctx->SetObject(_obj) );
+			//_obj->AddRef();
 
 			InitCallbacks();
 		}
 
 		//! Constructor for global methods (functions)
 		CallerBase(asIScriptModule *module, const char * decl)
-			: _decl(decl), _ok(true),
+			: _obj(NULL), _decl(decl), _ok(true),
 			_throwOnException(false),
 			OnScriptException(new exception_signal),
 			OnLineCallback(new line_signal)
@@ -112,7 +116,7 @@ namespace ScriptUtils { namespace Calling
 
 		//! Constructor for global methods (functions)
 		CallerBase(asIScriptEngine *engine, int funcId)
-			: _funcId(funcId), _ok(true),
+			: _obj(NULL), _funcId(funcId), _ok(true),
 			_throwOnException(false),
 			OnScriptException(new exception_signal),
 			OnLineCallback(new line_signal)
@@ -132,6 +136,7 @@ namespace ScriptUtils { namespace Calling
 		{
 			_ctx = other._ctx;
 			_decl = other._decl;
+			_obj = other._obj;
 			_funcId = other._funcId;
 			_ok = other._ok;
 
@@ -148,8 +153,7 @@ namespace ScriptUtils { namespace Calling
 		//! Destructor
 		virtual ~CallerBase()
 		{
-			if (_ctx != NULL)
-				_ctx->Release();
+			release();
 		}
 
 		//! Copy assignement operator
@@ -166,6 +170,7 @@ namespace ScriptUtils { namespace Calling
 			_ctx = other._ctx;
 
 			_decl = other._decl;
+			_obj = other._obj;
 			_funcId = other._funcId;
 			_ok = other._ok;
 
@@ -181,10 +186,25 @@ namespace ScriptUtils { namespace Calling
 		//! Releases the internal asIScriptContext
 		virtual void release()
 		{
-			if (_ctx != NULL && _ctx->Release() == 0)
+			if (_ctx != NULL)
 			{
-				_ctx = NULL;
-				_ok = false;
+				bool refAdded = false;
+				if (_ctx->GetState() & asEXECUTION_PREPARED && _obj != NULL)
+				{
+					//_obj->AddRef();
+					_ctx->SetObject(NULL);
+					refAdded = true;
+				}
+				if ( _ctx->Release() == 0)
+				{
+					_ctx = NULL;
+					_ok = false;
+				}
+				else if (refAdded)
+				{
+					//_obj->Release();
+					_ctx->SetObject(_obj);
+				}
 			}
 		}
 
@@ -202,7 +222,17 @@ namespace ScriptUtils { namespace Calling
 		//! Sets the object for this caller (if it wasn't set before, or needs to be changed)
 		bool set_object(asIScriptObject *obj)
 		{
-			return check_asreturn( _ctx->SetObject(obj) );
+			//if (_obj != NULL)
+			//	_obj->Release();
+			_obj = obj;
+			//if (obj != NULL)
+			//	obj->AddRef();
+			if (_ctx->GetState() & asEXECUTION_PREPARED)
+			{
+				return check_asreturn( _ctx->SetObject(obj) );
+			}
+			else
+				return true;
 		}
 
 		//! Throw a ScriptUtils#Caller#ScriptException if a script exception occors during execution
@@ -284,25 +314,25 @@ namespace ScriptUtils { namespace Calling
 			if (_ctx == NULL)
 			{
 				// Make a new ctx
-				//add_ref();
 				return;
 			}
 
 			if (_ctx->GetState() != asEXECUTION_PREPARED)
+			{
 				check_asreturn( _ctx->Prepare(_funcId) );
+				if (_obj != NULL)
+					check_asreturn( _ctx->SetObject(_obj) );
+			}
 
 			if (!_ok)
 				throw Exception("Can't execute'" + _decl + "' - Caller is not valid");
 
-			int r = _ctx->Execute(); 
+			int r = _ctx->Execute();
 			if (r < 0)
 				throw Exception("Failed to execute '" + _decl + "'");
 			
 			if (r == asEXECUTION_EXCEPTION)
 			{
-				// Fire signal to exception catchers
-				//(*OnScriptException)(_ctx);
-
 				//! \todo ScriptException with line number, module, section, etc. properties and ctor taking ctx param
 				if (_throwOnException)
 					throw Exception(std::string("Script Exception: ") + _ctx->GetExceptionString());
@@ -325,6 +355,7 @@ namespace ScriptUtils { namespace Calling
 	private:
 		asIScriptContext * _ctx;
 		std::string _decl;
+		asIScriptObject *_obj;
 		int _funcId;
 
 		bool _ok;
