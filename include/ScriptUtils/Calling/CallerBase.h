@@ -297,7 +297,37 @@ namespace ScriptUtils { namespace Calling
 		template <typename T>
 		void set_arg(asUINT arg, T t)
 		{
-			new (_ctx->GetArgPointer(arg)) CallHelper<T>(t);
+			new (_ctx->GetAddressOfArg(arg)) CallHelper<T>(t);
+		}
+
+		//template <typename T>
+		//void set_arg(asUINT arg, T* t)
+		//{
+		//	_ctx->SetArgObject(arg, (void*)t);
+		//}
+
+		template <>
+		void set_arg(asUINT arg, asDWORD t)
+		{
+			_ctx->SetArgDWord(arg, t);
+		}
+
+		template <>
+		void set_arg(asUINT arg, asQWORD t)
+		{
+			_ctx->SetArgQWord(arg, t);
+		}
+
+		template <>
+		void set_arg(asUINT arg, float t)
+		{
+			_ctx->SetArgFloat(arg, t);
+		}
+
+		template <>
+		void set_arg(asUINT arg, double t)
+		{
+			_ctx->SetArgDouble(arg, t);
 		}
 
 	protected:

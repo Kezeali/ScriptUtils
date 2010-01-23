@@ -287,22 +287,22 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\include\Exception.h"
+				RelativePath=".\include\ScriptUtils\Exception.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\ScriptUtils.h"
+				RelativePath=".\include\ScriptUtils\ScriptUtils.h"
 				>
 			</File>
 			<Filter
 				Name="Calling"
 				>
 				<File
-					RelativePath=".\include\Calling\Caller.h"
+					RelativePath=".\include\ScriptUtils\Calling\Caller.h"
 					>
 				</File>
 				<File
-					RelativePath=".\include\Calling\CallerBase.h"
+					RelativePath=".\include\ScriptUtils\Calling\CallerBase.h"
 					>
 				</File>
 			</Filter>
@@ -314,27 +314,27 @@
 				Name="Inheritance"
 				>
 				<File
-					RelativePath=".\include\Inheritance\CompleteHeaderGenerator.h"
+					RelativePath=".\include\ScriptUtils\Inheritance\CompleteHeaderGenerator.h"
 					>
 				</File>
 				<File
-					RelativePath=".\include\Inheritance\Lineage.h"
+					RelativePath=".\include\ScriptUtils\Inheritance\Lineage.h"
 					>
 				</File>
 				<File
-					RelativePath=".\include\Inheritance\ProxyGenerator.h"
+					RelativePath=".\include\ScriptUtils\Inheritance\ProxyGenerator.h"
 					>
 				</File>
 				<File
-					RelativePath=".\include\Inheritance\RegisterConversion.h"
+					RelativePath=".\include\ScriptUtils\Inheritance\RegisterConversion.h"
 					>
 				</File>
 				<File
-					RelativePath=".\include\Inheritance\ScriptObjectWrapper.h"
+					RelativePath=".\include\ScriptUtils\Inheritance\ScriptObjectWrapper.h"
 					>
 				</File>
 				<File
-					RelativePath=".\include\Inheritance\TypeTraits.h"
+					RelativePath=".\include\ScriptUtils\Inheritance\TypeTraits.h"
 					>
 				</File>
 			</Filter>

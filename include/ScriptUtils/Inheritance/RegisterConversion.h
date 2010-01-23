@@ -38,13 +38,13 @@ namespace ScriptUtils { namespace Inheritance
 	void RegisterBaseOf(asIScriptEngine *engine, const std::string& base, const std::string& derived)
 	{
 		int r;
-		r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST,
-			(derived+"@ f("+base+"@)").c_str(), asFUNCTIONPR(convert_ref, (_Base*), _Derived*),
-			asCALL_CDECL);
+		r = engine->RegisterObjectBehaviour(base.c_str(), asBEHAVE_REF_CAST,
+			(derived+"@ f()").c_str(), asFUNCTION((convert_ref<_Base, _Derived>)),
+			asCALL_CDECL_OBJLAST);
 
-		r = engine->RegisterGlobalBehaviour(asBEHAVE_IMPLICIT_REF_CAST,
-			(base+"@ f("+derived+"@)").c_str(), asFUNCTIONPR(convert_ref, (_Derived*), _Base*),
-			asCALL_CDECL);
+		r = engine->RegisterObjectBehaviour(derived.c_str(), asBEHAVE_IMPLICIT_REF_CAST,
+			(base+"@ f()").c_str(), asFUNCTION((convert_ref<_Derived, _Base>)),
+			asCALL_CDECL_OBJLAST);
 	}
 
 }}

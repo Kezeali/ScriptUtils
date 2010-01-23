@@ -6,7 +6,8 @@
 
 #include <angelscript.h>
 
-//#include "../Exception.h"
+//#include "../include/ScriptUtils/Exception.h"
+#include "../include/ScriptUtils/Inheritance/TypeTraits.h"
 
 #include <cstring>
 
