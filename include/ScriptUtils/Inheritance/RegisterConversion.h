@@ -17,15 +17,15 @@ namespace ScriptUtils { namespace Inheritance
 {
 
 	template <class _From, class _To>
-	_To * convert_ref(_From * obj) // fn param (so fn. other than 'RemoveReference' can be used)
+	_To * convert_ref(_From * obj) // fn param (so fn. other than 'AddReference' can be used)
 	{
 		if (obj == NULL)
 			return NULL;
 
 		_To* ret = dynamic_cast<_To*>(obj);
-		if (ret == NULL)
+		if (ret != NULL)
 		{
-			obj->RemoveReference();
+			ret->AddReference();
 		}
 		return ret;
 	}
