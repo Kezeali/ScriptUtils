@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Header Files\Calling">
+      <UniqueIdentifier>{d8b0f692-b5c9-4fb4-8888-da34a9de9b5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Engine">
+      <UniqueIdentifier>{d4776fd5-f3b4-4f5b-ae4a-79b04d1ab49f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Inheritance">
+      <UniqueIdentifier>{c1660cd6-3520-450e-9f43-d395f07e7c33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\TypeTraits.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\ScriptUtils\Calling\Caller.h">
+      <Filter>Header Files\Calling</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ScriptUtils\Calling\CallerBase.h">
+      <Filter>Header Files\Calling</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ScriptUtils\Exception.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ScriptUtils\Inheritance\CompleteHeaderGenerator.h">
+      <Filter>Header Files\Inheritance</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ScriptUtils\Inheritance\Lineage.h">
+      <Filter>Header Files\Inheritance</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ScriptUtils\Inheritance\ProxyGenerator.h">
+      <Filter>Header Files\Inheritance</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ScriptUtils\Inheritance\RegisterConversion.h">
+      <Filter>Header Files\Inheritance</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ScriptUtils\Inheritance\ScriptObjectWrapper.h">
+      <Filter>Header Files\Inheritance</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ScriptUtils\Inheritance\TypeTraits.h">
+      <Filter>Header Files\Inheritance</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ScriptUtils\ScriptUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
