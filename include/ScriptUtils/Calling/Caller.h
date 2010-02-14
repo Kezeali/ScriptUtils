@@ -57,10 +57,10 @@ namespace ScriptUtils { namespace Calling
 		}
 		else if (r == asINVALID_TYPE)
 		{
-			std::type_info type = typeid(obj);
+			const std::type_info &type = typeid(obj);
 			std::ostringstream stream;
 			stream << arg;
-			throw Exception("Caller: The '" + type.name() + "' type object passed as argument " + stream.str() + " is of incorrect type");
+			throw Exception("Caller: The '" + std::string(type.name()) + "' type object passed as argument " + stream.str() + " is of incorrect type");
 		}
 	}
 
