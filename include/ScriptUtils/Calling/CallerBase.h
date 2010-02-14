@@ -289,25 +289,25 @@ namespace ScriptUtils { namespace Calling
 		template <>
 		int set_arg(asUINT arg, asDWORD t)
 		{
-			_ctx->SetArgDWord(arg, t);
+			return _ctx->SetArgDWord(arg, t);
 		}
 
 		template <>
 		int set_arg(asUINT arg, asQWORD t)
 		{
-			_ctx->SetArgQWord(arg, t);
+			return _ctx->SetArgQWord(arg, t);
 		}
 
 		template <>
 		int set_arg(asUINT arg, float t)
 		{
-			_ctx->SetArgFloat(arg, t);
+			return _ctx->SetArgFloat(arg, t);
 		}
 
 		template <>
 		int set_arg(asUINT arg, double t)
 		{
-			_ctx->SetArgDouble(arg, t);
+			return _ctx->SetArgDouble(arg, t);
 		}
 
 	protected:
