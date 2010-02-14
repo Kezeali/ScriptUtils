@@ -34,12 +34,12 @@ namespace ScriptUtils { namespace Calling
 		else if (r == asINVALID_ARG)
 		{
 			std::string wrongNumOfArgs, rightNumOfArgs;
-			if (arg = 0)
+			if (arg == 0)
 			{
 				wrongNumOfArgs = "one argument";
 				rightNumOfArgs = "no arguments";
 			}
-			else if (arg = 1)
+			else if (arg == 1)
 			{
 				wrongNumOfArgs = "2 arguments";
 				rightNumOfArgs = "one argument";
