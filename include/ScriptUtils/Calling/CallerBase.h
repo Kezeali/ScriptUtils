@@ -14,6 +14,7 @@
 #include <boost/signals2/signal.hpp>
 #include <boost/function.hpp>
 #include <memory>
+#include <sstream>
 
 
 namespace ScriptUtils { namespace Calling
@@ -268,36 +269,15 @@ namespace ScriptUtils { namespace Calling
 			_ctx->SetExceptionCallback(asFUNCTION(CallerExceptionCallback), OnScriptException.get(), asCALL_CDECL);
 		}
 
-		//! Change the line callback
-		/*!
-		* The default line callback fires the OnLineCallback signal -
-		* calling this function will overwrite that, so OnLineCallback
-		* slots will no longer be executed.
-		*/
-		//void SetLineCallback(asSFuncPtr fn, void *obj)
-		//{
-		//	_ctx->SetLineCallback(fn, obj, asCALL_THISCALL);
-		//}
-
-		//! Change the exception callback
-		/*!
-		* The default exception callback fires the OnScriptException signal -
-		* calling this function will overwrite that, so OnScriptException
-		* slots will no longer be executed.
-		*/
-		//void SetExceptionCallback(asSFuncPtr fn, void *obj)
-		//{
-		//	_ctx->SetExceptionCallback(fn, obj, asCALL_THISCALL);
-		//}
-
 		//! Sets the given arg
 		/*!
 		* Use when args need to be set iteratively - otherwise use Caller#operator().
 		*/
 		template <typename T>
-		void set_arg(asUINT arg, T t)
+		int set_arg(asUINT arg, T t)
 		{
 			new (_ctx->GetAddressOfArg(arg)) CallHelper<T>(t);
+			return 0;
 		}
 
 		//template <typename T>
@@ -307,25 +287,25 @@ namespace ScriptUtils { namespace Calling
 		//}
 
 		template <>
-		void set_arg(asUINT arg, asDWORD t)
+		int set_arg(asUINT arg, asDWORD t)
 		{
 			_ctx->SetArgDWord(arg, t);
 		}
 
 		template <>
-		void set_arg(asUINT arg, asQWORD t)
+		int set_arg(asUINT arg, asQWORD t)
 		{
 			_ctx->SetArgQWord(arg, t);
 		}
 
 		template <>
-		void set_arg(asUINT arg, float t)
+		int set_arg(asUINT arg, float t)
 		{
 			_ctx->SetArgFloat(arg, t);
 		}
 
 		template <>
-		void set_arg(asUINT arg, double t)
+		int set_arg(asUINT arg, double t)
 		{
 			_ctx->SetArgDouble(arg, t);
 		}

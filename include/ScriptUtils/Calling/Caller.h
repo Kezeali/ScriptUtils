@@ -23,21 +23,46 @@
 namespace ScriptUtils { namespace Calling
 {
 
-	// Old template class (as opposed to templated operator()) based code 
-	//template <typename Fn>
-	//class Caller {};
-
-	//template <>
-	//class Caller<void (void)> : CallingBase {
-	//public:
-	//	Caller(asIScriptObject * obj, const char * decl)
-	//		: CallingBase(obj, decl)
-	//	{}
-	//
-	//	Caller(asIScriptModule *module, const char * decl)
-	//		: CallingBase(module, decl)
-	//	{}
-	//};
+	//! Throws if the given return value of a SetArgX Fn indicates failure
+	template <typename T>
+	void checkSetArgReturn(int r, asUINT arg, const T& obj)
+	{
+		if (r == asCONTEXT_NOT_PREPARED)
+		{
+			throw Exception("Caller: Trying to set an argument on an uninitialized script context");
+		}
+		else if (r == asINVALID_ARG)
+		{
+			std::string wrongNumOfArgs, rightNumOfArgs;
+			if (arg = 0)
+			{
+				wrongNumOfArgs = "one argument";
+				rightNumOfArgs = "no arguments";
+			}
+			else if (arg = 1)
+			{
+				wrongNumOfArgs = "2 arguments";
+				rightNumOfArgs = "one argument";
+			}
+			else
+			{
+				std::ostringstream stream;
+				stream << arg+1 << " arguments";
+				wrongNumOfArgs = stream.str();
+				stream.str("");
+				stream << arg << " arguments";
+				rightNumOfArgs = stream.str();
+			}
+			throw Exception("Caller: Was given " + wrongNumOfArgs + " to method taking " + rightNumOfArgs);
+		}
+		else if (r == asINVALID_TYPE)
+		{
+			std::type_info type = typeid(obj);
+			std::ostringstream stream;
+			stream << arg;
+			throw Exception("Caller: The '" + type.name() + "' type object passed as argument " + stream.str() + " is of incorrect type");
+		}
+	}
 
 	//! Creates a callable object (with templated parameters) for an AngelScript function
 	/*!
@@ -118,7 +143,7 @@ namespace ScriptUtils { namespace Calling
 			return return_address();
 		}
 
-#define repeat_set_arg(z, n, text) set_arg(n, a ## n);
+#define repeat_set_arg(z, n, text) checkSetArgReturn(set_arg(n, a ## n), n, a##n);
 
 #define BOOST_PP_ITERATION_PARAMS_1 (3, (1, SCRIPTCALL_NUMPARAMS, "Caller.h"))
 #include BOOST_PP_ITERATE()
@@ -144,7 +169,6 @@ namespace ScriptUtils { namespace Calling
 		{
 			// Calls set_arg(n, an) for each 'n'
 			//  ~ does nothing, just junk arg
-			//  See set_arg_pprepeat macro at the top of this file
 			BOOST_PP_REPEAT(n, repeat_set_arg, ~)
 				execute();
 
@@ -156,7 +180,6 @@ namespace ScriptUtils { namespace Calling
 		{
 			// Calls set_arg(n, an) for each 'n'
 			//  ~ does nothing, just junk arg
-			//  See set_arg_pprepeat macro at the top of this file
 			BOOST_PP_REPEAT(n, repeat_set_arg, ~)
 				execute();
 
