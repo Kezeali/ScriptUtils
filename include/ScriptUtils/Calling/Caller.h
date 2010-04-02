@@ -126,6 +126,7 @@ namespace ScriptUtils { namespace Calling
 		template <typename R>
 		R call(void)
 		{
+			refresh();
 			execute();
 			return static_cast< CallHelper<R>* >(return_address())->element;
 		}
@@ -139,6 +140,7 @@ namespace ScriptUtils { namespace Calling
 		*/
 		void* operator()(void)
 		{
+			refresh();
 			execute();
 			return return_address();
 		}
@@ -167,10 +169,13 @@ namespace ScriptUtils { namespace Calling
 		template <typename R, BOOST_PP_ENUM_PARAMS_Z(1 ,n, typename A)>
 		R call(BOOST_PP_ENUM_BINARY_PARAMS_Z(1, n, A ,a))
 		{
+			// Prepare the asIScriptContext (does nothing if it is already prepared)
+			refresh();
 			// Calls set_arg(n, an) for each 'n'
 			//  ~ does nothing, just junk arg
 			BOOST_PP_REPEAT(n, repeat_set_arg, ~)
-				execute();
+
+			execute();
 
 			return static_cast< CallHelper<R>* >(return_address())->element;
 		}
@@ -178,10 +183,13 @@ namespace ScriptUtils { namespace Calling
 		template <BOOST_PP_ENUM_PARAMS_Z(1 ,n, typename A)>
 		void* operator() (BOOST_PP_ENUM_BINARY_PARAMS_Z(1, n, A ,a))
 		{
+			// Prepare the asIScriptContext (does nothing if it is already prepared)
+			refresh();
 			// Calls set_arg(n, an) for each 'n'
 			//  ~ does nothing, just junk arg
 			BOOST_PP_REPEAT(n, repeat_set_arg, ~)
-				execute();
+
+			execute();
 
 			return return_address();
 		}

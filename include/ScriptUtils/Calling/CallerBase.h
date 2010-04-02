@@ -86,9 +86,6 @@ namespace ScriptUtils { namespace Calling
 			_funcId = type->GetMethodIdByDecl(decl);
 			check_asreturn(_funcId);
 
-			// Can't prepare object method if we aren't sure it will be executed
-			//  - a prepared contexts delete the objects when they are released 
-			//  (I think this is a bug)
 			check_asreturn( _ctx->Prepare(_funcId) );
 			check_asreturn( _ctx->SetObject(_obj) );
 			//_obj->AddRef();
@@ -190,7 +187,7 @@ namespace ScriptUtils { namespace Calling
 			if (_ctx != NULL)
 			{
 				bool refAdded = false;
-				if (_ctx->GetState() & asEXECUTION_PREPARED && _obj != NULL)
+				if (_ctx->GetState() == asEXECUTION_PREPARED && _obj != NULL)
 				{
 					//_obj->AddRef();
 					_ctx->SetObject(NULL);
@@ -217,7 +214,23 @@ namespace ScriptUtils { namespace Calling
 
 		virtual bool refresh()
 		{
-			return check_asreturn( _ctx->Prepare(_funcId) );
+			if (_ctx->GetState() != asEXECUTION_PREPARED)
+			{
+				asIScriptEngine *engine = _ctx->GetEngine();
+				_ctx->Release();
+				_ctx = engine->CreateContext();
+
+				if (_ctx == nullptr)
+				{
+					_ok = false;
+					return false;
+				}
+
+				check_asreturn( _ctx->Prepare(_funcId) );
+				if (_obj != nullptr)
+					check_asreturn( _ctx->SetObject(_obj) );
+			}
+			return ok();
 		}
 
 		//! Sets the object for this caller (if it wasn't set before, or needs to be changed)
@@ -321,18 +334,8 @@ namespace ScriptUtils { namespace Calling
 		void execute(void)
 		{
 			// Make sure there is a valid ctx
-			if (_ctx == NULL)
-			{
-				// Make a new ctx
-				return;
-			}
-
-			if (_ctx->GetState() != asEXECUTION_PREPARED)
-			{
-				check_asreturn( _ctx->Prepare(_funcId) );
-				if (_obj != NULL)
-					check_asreturn( _ctx->SetObject(_obj) );
-			}
+			if (_ctx == nullptr || _ctx->GetState() != asEXECUTION_PREPARED)
+				throw Exception("Can't execute'" + _decl + "' - Caller is not prepared to execute");
 
 			if (!_ok)
 				throw Exception("Can't execute'" + _decl + "' - Caller is not valid");
