@@ -89,8 +89,6 @@ namespace ScriptUtils { namespace Calling
 			check_asreturn( _ctx->Prepare(_funcId) );
 			check_asreturn( _ctx->SetObject(_obj) );
 			//_obj->AddRef();
-
-			InitCallbacks();
 		}
 
 		//! Constructor for global methods (functions)
@@ -108,8 +106,6 @@ namespace ScriptUtils { namespace Calling
 			check_asreturn(_funcId);
 
 			check_asreturn( _ctx->Prepare(_funcId) );
-
-			InitCallbacks();
 		}
 
 		//! Constructor for global methods (functions)
@@ -125,8 +121,6 @@ namespace ScriptUtils { namespace Calling
 				_decl = engine->GetFunctionDescriptorById(_funcId)->GetDeclaration();
 
 			check_asreturn( _ctx->Prepare(_funcId) );
-
-			InitCallbacks();
 		}
 
 		//! Copy constructor
@@ -260,26 +254,23 @@ namespace ScriptUtils { namespace Calling
 		typedef boost::signals2::signal<void (asIScriptContext*)> line_signal;
 		typedef boost::signals2::signal<void (asIScriptContext*)> exception_signal;
 
-		typedef std::tr1::shared_ptr<line_signal> line_signal_ptr;
-		typedef std::tr1::shared_ptr<exception_signal> exception_signal_ptr;
+		typedef std::shared_ptr<line_signal> line_signal_ptr;
+		typedef std::shared_ptr<exception_signal> exception_signal_ptr;
 
 		//! Connects a line callback slot
 		boost::signals2::connection ConnectLineCallback(script_callback_fn fn)
 		{
+			if (OnLineCallback->empty())
+				_ctx->SetLineCallback(asFUNCTION(CallerLineCallback), OnLineCallback.get(), asCALL_CDECL);
 			return OnLineCallback->connect(fn);
 		}
 
 		//! Connects an exception callback
 		boost::signals2::connection ConnectExceptionCallback(script_callback_fn fn)
 		{
+			if (OnScriptException->empty())
+				_ctx->SetExceptionCallback(asFUNCTION(CallerExceptionCallback), OnScriptException.get(), asCALL_CDECL);
 			return OnScriptException->connect(fn);
-		}
-
-		void InitCallbacks()
-		{
-			//CallerContextCallbacksPtr callbackObj(new CallerContextCallbacks(this));
-			_ctx->SetLineCallback(asFUNCTION(CallerLineCallback), OnLineCallback.get(), asCALL_CDECL);
-			_ctx->SetExceptionCallback(asFUNCTION(CallerExceptionCallback), OnScriptException.get(), asCALL_CDECL);
 		}
 
 		//! Sets the given arg
