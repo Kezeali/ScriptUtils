@@ -39,9 +39,9 @@ namespace ScriptUtils { namespace Calling
 	//	CallerContextCallbacks(CallerBase *target)
 	//		: m_Targer(target)
 	//	{}
-	//	//! Default line callback fn. - Fires OnLineCallback
+	//	//! Default line callback fn. - Fires LineSignal
 	//	void LineCallback(asIScriptContext *ctx);
-	//	//! Default exception callback fn. - Fires OnScriptException
+	//	//! Default exception callback fn. - Fires ScriptExceptionSignal
 	//	void ExceptionCallback(asIScriptContext *ctx);
 
 	//private:
@@ -53,191 +53,243 @@ namespace ScriptUtils { namespace Calling
 	void CallerExceptionCallback(asIScriptContext *ctx, void *obj);
 
 	//! Base class for callers
-	/*!
-	* \todo Allow line-callbacks, provide LineDebugger as the default CB implementation
-	*/
 	class CallerBase
 	{
 	public:
 		//! Default constructor
 		/*!
-		* Constructs an invalid Caller - only provided for container support
+		* Constructs an empty Caller
 		*/
 		CallerBase()
-			: _ok(false), _obj(NULL), _funcId(-1), _ctx(NULL),
-			_throwOnException(false),
-			OnScriptException(new exception_signal),
-			OnLineCallback(new line_signal)
+			: ok(false), obj(NULL), funcId(-1), ctx(NULL),
+			throwOnException(false),
+			ScriptExceptionSignal(new exception_signal),
+			LineSignal(new line_signal)
 		{
 		}
 
 		//! Constructor for object methods
-		CallerBase(asIScriptObject * obj, const char * decl)
-			: _obj(obj), _decl(decl), _ok(true),
-			_throwOnException(false),
-			OnScriptException(new exception_signal),
-			OnLineCallback(new line_signal)
+		CallerBase(asIScriptObject *obj, const char *decl)
+			: obj(obj), decl(decl), ok(true),
+			throwOnException(false),
+			ScriptExceptionSignal(new exception_signal),
+			LineSignal(new line_signal)
 		{
 			asIScriptEngine *engine = obj->GetEngine();
 
-			_ctx = engine->CreateContext();
+			ctx = engine->CreateContext();
 
 			asIObjectType *type = obj->GetObjectType();
-			_funcId = type->GetMethodIdByDecl(decl);
-			check_asreturn(_funcId);
+			funcId = type->GetMethodIdByDecl(decl);
+			check_asreturn(funcId);
 
-			check_asreturn( _ctx->Prepare(_funcId) );
-			check_asreturn( _ctx->SetObject(_obj) );
-			//_obj->AddRef();
+			check_asreturn( ctx->Prepare(funcId) );
+			check_asreturn( ctx->SetObject(obj) );
+			//obj->AddRef();
 		}
 
 		//! Constructor for global methods (functions)
-		CallerBase(asIScriptModule *module, const char * decl)
-			: _obj(NULL), _decl(decl), _ok(true),
-			_throwOnException(false),
-			OnScriptException(new exception_signal),
-			OnLineCallback(new line_signal)
+		CallerBase(asIScriptModule *module, const char *decl)
+			: obj(NULL), decl(decl), ok(true),
+			throwOnException(false),
+			ScriptExceptionSignal(new exception_signal),
+			LineSignal(new line_signal)
 		{
 			asIScriptEngine *engine = module->GetEngine();
 
-			_ctx = engine->CreateContext();
+			ctx = engine->CreateContext();
 
-			_funcId = module->GetFunctionIdByDecl(decl);
-			check_asreturn(_funcId);
+			funcId = module->GetFunctionIdByDecl(decl);
+			check_asreturn(funcId);
 
-			check_asreturn( _ctx->Prepare(_funcId) );
+			check_asreturn( ctx->Prepare(funcId) );
 		}
 
 		//! Constructor for global methods (functions)
 		CallerBase(asIScriptEngine *engine, int funcId)
-			: _obj(NULL), _funcId(funcId), _ok(true),
-			_throwOnException(false),
-			OnScriptException(new exception_signal),
-			OnLineCallback(new line_signal)
+			: obj(NULL), funcId(funcId), ok(true),
+			throwOnException(false),
+			ScriptExceptionSignal(new exception_signal),
+			LineSignal(new line_signal)
 		{
-			_ctx = engine->CreateContext();
+			ctx = engine->CreateContext();
 
-			if (check_asreturn(_funcId))
-				_decl = engine->GetFunctionDescriptorById(_funcId)->GetDeclaration();
+			if (check_asreturn(funcId))
+				decl = engine->GetFunctionDescriptorById(funcId)->GetDeclaration();
 
-			check_asreturn( _ctx->Prepare(_funcId) );
+			check_asreturn( ctx->Prepare(funcId) );
 		}
 
 		//! Copy constructor
 		CallerBase(const CallerBase &other)
+			: ctx(other.ctx),
+			obj(other.obj),
+			decl(other.decl),
+			funcId(other.funcId),
+			ok(other.ok),
+			throwOnException(other.throwOnException),
+			LineSignal(other.LineSignal),
+			ScriptExceptionSignal(other.ScriptExceptionSignal)
 		{
-			_ctx = other._ctx;
-			_decl = other._decl;
-			_obj = other._obj;
-			_funcId = other._funcId;
-			_ok = other._ok;
+			if (other.is_ok())
+			{
+				ctx = other.ctx->GetEngine()->CreateContext();
 
-			// Signal ptrs
-			OnLineCallback = other.OnLineCallback;
-			//  Exception handling
-			_throwOnException = other._throwOnException;
-			OnScriptException = other.OnScriptException;
+				if (ctx == nullptr)
+					ok = false;
+				else
+				{
+					check_asreturn( ctx->Prepare(funcId) );
+					if (obj != nullptr)
+						check_asreturn( ctx->SetObject(obj) );
+				}
+			}
+		}
 
-			if (_ctx != NULL)
-				_ctx->AddRef();
+		//! Move constructor
+		CallerBase(CallerBase &&other)
+			: ctx(other.ctx),
+			obj(other.obj),
+			decl(std::move(other.decl)),
+			funcId(other.funcId),
+			ok(other.ok),
+			throwOnException(other.throwOnException),
+			LineSignal(std::move(other.LineSignal)),
+			ScriptExceptionSignal(std::move(other.ScriptExceptionSignal))
+		{
+			other.ctx = nullptr;
+			other.obj = nullptr;
 		}
 
 		//! Destructor
-		virtual ~CallerBase()
+		~CallerBase()
 		{
 			release();
 		}
 
-		//! Copy assignement operator
-		CallerBase & operator=(const CallerBase &other)
+		//! Copy-assignement operator
+		CallerBase& operator= (const CallerBase &other)
 		{
-			// Release this object's reference to the context
-			//  - it doesn't matter if this invalidates this caller
-			//  (sets _ok to false, nullifies _ctx), because _ok and
-			//  _ctx are about to be copied from the other caller
+			// Release this object's reference to the context & script object;
+			//  ctx is about to be copied from the other caller
 			release();
-			// Copy the other object's ctx
-			if (other._ctx != NULL)
-				other._ctx->AddRef();
-			_ctx = other._ctx;
 
-			_decl = other._decl;
-			_obj = other._obj;
-			_funcId = other._funcId;
-			_ok = other._ok;
+			decl = other.decl;
+			obj = other.obj;
+			funcId = other.funcId;
+
+			ok = other.ok;
+
+			if (other.is_ok())
+			{
+				ctx = other.ctx->GetEngine()->CreateContext();
+
+				if (ctx == nullptr)
+					ok = false;
+				else
+				{
+					check_asreturn( ctx->Prepare(funcId) );
+					if (obj != nullptr)
+						check_asreturn( ctx->SetObject(obj) );
+				}
+			}
 
 			// Signal ptrs
-			OnLineCallback = other.OnLineCallback;
-			//  Exception handling
-			_throwOnException = other._throwOnException;
-			OnScriptException = other.OnScriptException;
+			LineSignal = other.LineSignal;
+			ScriptExceptionSignal = other.ScriptExceptionSignal;
+
+			throwOnException = other.throwOnException;
+
+			return *this;
+		}
+
+		//! Move-assignement operator
+		CallerBase& operator= (CallerBase &&other)
+		{
+			// Release this object's reference to the context & script object;
+			//  ctx is about to be taken from the other caller
+			release();
+
+			// Take the other caller's ctx
+			std::swap(ctx, other.ctx);
+
+			std::swap(obj, other.obj);
+
+			decl = std::move(other.decl);
+			funcId = other.funcId;
+			ok = other.ok;
+
+			// Signal ptrs
+			LineSignal = std::move(other.LineSignal);
+			ScriptExceptionSignal = std::move(other.ScriptExceptionSignal);
+
+			throwOnException = other.throwOnException;
 
 			return *this;
 		}
 
 		//! Releases the internal asIScriptContext
-		virtual void release()
+		void release()
 		{
-			if (_ctx != NULL)
+			if (ctx != nullptr)
 			{
-				bool refAdded = false;
-				if (_ctx->GetState() == asEXECUTION_PREPARED && _obj != NULL)
+				bool heldObject = false;
+				if (ctx->GetState() == asEXECUTION_PREPARED && obj != NULL)
 				{
-					//_obj->AddRef();
-					_ctx->SetObject(NULL);
-					refAdded = true;
+					//obj->AddRef();
+					ctx->SetObject(NULL); // Temporarily remove the object from the ctx
+					heldObject = true;
 				}
-				if ( _ctx->Release() == 0)
+				if (ctx->Release() > 0 && heldObject)
 				{
-					_ctx = NULL;
-					_ok = false;
+					// If this caller wasn't the last reference to the ctx, re-set the object
+					ctx->SetObject(obj);
+					//obj->Release();
 				}
-				else if (refAdded)
-				{
-					//_obj->Release();
-					_ctx->SetObject(_obj);
-				}
+				ctx = nullptr;
+				obj = nullptr;
+				ok = false;
 			}
 		}
 
-		//! Returns true if the fn. is prepared to execute
-		virtual bool ok()
+		//! Returns true if this caller is prepared to execute
+		bool is_ok() const
 		{
-			return _ok;
+			return ok;
 		}
 
-		virtual bool refresh()
+		bool refresh()
 		{
-			if (_ctx->GetState() != asEXECUTION_PREPARED)
+			if (ctx != nullptr && ctx->GetState() != asEXECUTION_PREPARED)
 			{
-				asIScriptEngine *engine = _ctx->GetEngine();
-				_ctx->Release();
-				_ctx = engine->CreateContext();
+				asIScriptEngine *engine = ctx->GetEngine();
+				ctx->Release();
+				ctx = engine->CreateContext();
 
-				if (_ctx == nullptr)
+				if (ctx == nullptr)
 				{
-					_ok = false;
+					ok = false;
 					return false;
 				}
 
-				check_asreturn( _ctx->Prepare(_funcId) );
-				if (_obj != nullptr)
-					check_asreturn( _ctx->SetObject(_obj) );
+				check_asreturn( ctx->Prepare(funcId) );
+				if (obj != nullptr)
+					check_asreturn( ctx->SetObject(obj) );
 			}
-			return ok();
+			return is_ok();
 		}
 
 		//! Sets the object for this caller (if it wasn't set before, or needs to be changed)
 		bool set_object(asIScriptObject *obj)
 		{
-			//if (_obj != NULL)
-			//	_obj->Release();
-			_obj = obj;
+			//if (obj != NULL)
+			//	obj->Release();
+			obj = obj;
 			//if (obj != NULL)
 			//	obj->AddRef();
-			if (_ctx->GetState() & asEXECUTION_PREPARED)
+			if (ctx->GetState() & asEXECUTION_PREPARED)
 			{
-				return check_asreturn( _ctx->SetObject(obj) );
+				return check_asreturn( ctx->SetObject(obj) );
 			}
 			else
 				return true;
@@ -246,7 +298,7 @@ namespace ScriptUtils { namespace Calling
 		//! Throw a ScriptUtils#Caller#ScriptException if a script exception occors during execution
 		void SetThrowOnException(bool should_throw)
 		{
-			_throwOnException = should_throw;
+			throwOnException = should_throw;
 		}
 
 		typedef boost::function<void (asIScriptContext*)> script_callback_fn;
@@ -260,17 +312,17 @@ namespace ScriptUtils { namespace Calling
 		//! Connects a line callback slot
 		boost::signals2::connection ConnectLineCallback(script_callback_fn fn)
 		{
-			if (OnLineCallback->empty())
-				_ctx->SetLineCallback(asFUNCTION(CallerLineCallback), OnLineCallback.get(), asCALL_CDECL);
-			return OnLineCallback->connect(fn);
+			if (LineSignal->empty())
+				ctx->SetLineCallback(asFUNCTION(CallerLineCallback), LineSignal.get(), asCALL_CDECL);
+			return LineSignal->connect(fn);
 		}
 
 		//! Connects an exception callback
 		boost::signals2::connection ConnectExceptionCallback(script_callback_fn fn)
 		{
-			if (OnScriptException->empty())
-				_ctx->SetExceptionCallback(asFUNCTION(CallerExceptionCallback), OnScriptException.get(), asCALL_CDECL);
-			return OnScriptException->connect(fn);
+			if (ScriptExceptionSignal->empty())
+				ctx->SetExceptionCallback(asFUNCTION(CallerExceptionCallback), ScriptExceptionSignal.get(), asCALL_CDECL);
+			return ScriptExceptionSignal->connect(fn);
 		}
 
 		//! Sets the given arg
@@ -280,91 +332,92 @@ namespace ScriptUtils { namespace Calling
 		template <typename T>
 		int set_arg(asUINT arg, T t)
 		{
-			new (_ctx->GetAddressOfArg(arg)) CallHelper<T>(t);
+			new (ctx->GetAddressOfArg(arg)) CallHelper<T>(t);
 			return 0;
 		}
 
 		//template <typename T>
 		//void set_arg(asUINT arg, T* t)
 		//{
-		//	_ctx->SetArgObject(arg, (void*)t);
+		//	ctx->SetArgObject(arg, (void*)t);
 		//}
 
 		template <>
 		int set_arg(asUINT arg, asDWORD t)
 		{
-			return _ctx->SetArgDWord(arg, t);
+			return ctx->SetArgDWord(arg, t);
 		}
 
 		template <>
 		int set_arg(asUINT arg, asQWORD t)
 		{
-			return _ctx->SetArgQWord(arg, t);
+			return ctx->SetArgQWord(arg, t);
 		}
 
 		template <>
 		int set_arg(asUINT arg, float t)
 		{
-			return _ctx->SetArgFloat(arg, t);
+			return ctx->SetArgFloat(arg, t);
 		}
 
 		template <>
 		int set_arg(asUINT arg, double t)
 		{
-			return _ctx->SetArgDouble(arg, t);
+			return ctx->SetArgDouble(arg, t);
 		}
 
 	protected:
 		//! Called after each script line is executed
-		line_signal_ptr OnLineCallback;
+		//! \remarks This is a shared_ptr so that it can be shared between multiple Caller objects that reference the same context
+		line_signal_ptr LineSignal;
 		//! Called when a script throws an exception during execution
-		exception_signal_ptr OnScriptException;
+		exception_signal_ptr ScriptExceptionSignal;
 		//script_exception_callback_fn OnScriptException;
 
 		//! Executes the script method
 		void execute(void)
 		{
 			// Make sure there is a valid ctx
-			if (_ctx == nullptr || _ctx->GetState() != asEXECUTION_PREPARED)
-				throw Exception("Can't execute'" + _decl + "' - Caller is not prepared to execute");
+			if (ctx == nullptr || ctx->GetState() != asEXECUTION_PREPARED)
+				throw Exception("Can't execute '" + decl + "' - Caller is not prepared to execute");
 
-			if (!_ok)
-				throw Exception("Can't execute'" + _decl + "' - Caller is not valid");
+			if (!ok)
+				throw Exception("Can't execute '" + decl + "' - Caller is not valid");
 
-			int r = _ctx->Execute();
+			int r = ctx->Execute();
 			if (r < 0)
-				throw Exception("Failed to execute '" + _decl + "'");
+				throw Exception("Failed while executing '" + decl + "'");
 			
 			if (r == asEXECUTION_EXCEPTION)
 			{
 				//! \todo ScriptException with line number, module, section, etc. properties and ctor taking ctx param
-				if (_throwOnException)
-					throw Exception(std::string("Script Exception: ") + _ctx->GetExceptionString());
+				if (throwOnException)
+					throw Exception(std::string("Script Exception: ") + ctx->GetExceptionString());
 			}
 		}
 
-		void * return_address(void)
+		void* return_address(void)
 		{
-			return _ctx->GetAddressOfReturnValue();
+			return ctx->GetAddressOfReturnValue();
 		}
 
-		// Sets _ok to false if the result of an AngelScript fn. indicates an error
+		// Sets ok to false if the result of an AngelScript fn. indicates an error
 		bool check_asreturn(int r)
 		{
 			if (r < 0)
-				_ok = false;
-			return _ok;
+				ok = false;
+			return ok;
 		}
 
 	private:
-		asIScriptContext * _ctx;
-		std::string _decl;
-		asIScriptObject *_obj;
-		int _funcId;
+		asIScriptContext* ctx;
+		std::string decl;
+		asIScriptObject* obj;
+		int funcId;
 
-		bool _ok;
+		bool ok;
 
-		bool _throwOnException;
+		bool throwOnException;
 	};
 
 	static void CallerLineCallback(asIScriptContext *ctx, void *obj)

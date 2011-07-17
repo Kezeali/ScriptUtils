@@ -71,23 +71,31 @@ namespace ScriptUtils { namespace Calling
 	*/
 	class Caller : public CallerBase
 	{
+		typedef void (Caller::*safe_bool)() const;
+    void this_type_does_not_support_comparisons() const {}
 	public:
 		//! Default constructor
-		/*!
-		* Provided to allow storing Callers by value in containers.
-		* Shouldn't be used otherwise.
-		*/
 		Caller()
 			: CallerBase()
 		{}
 
+		//! Copy constructor
+		Caller(const Caller& other)
+			: CallerBase(other)
+		{}
+
+		//! Move constructor
+		Caller(Caller&& other)
+			: CallerBase(std::move(other))
+		{}
+
 		//! Constructor: for object methods
-		Caller(asIScriptObject * obj, const char * decl)
+		Caller(asIScriptObject *obj, const char *decl)
 			: CallerBase(obj, decl)
 		{}
 
 		//! Constructor: for global functions
-		Caller(asIScriptModule *module, const char * decl)
+		Caller(asIScriptModule *module, const char *decl)
 			: CallerBase(module, decl)
 		{}
 
@@ -112,6 +120,11 @@ namespace ScriptUtils { namespace Calling
 			Caller caller(obj->GetEngine(), funcId);
 			caller.set_object(obj);
 			return caller;
+		}
+
+		operator safe_bool() const
+		{
+			return is_ok() ? &Caller::this_type_does_not_support_comparisons : 0;
 		}
 
 		//! Calls the function with no params
@@ -152,7 +165,7 @@ namespace ScriptUtils { namespace Calling
 
 #undef repeat_set_arg
 
-	protected:
+	private:
 		Caller(asIScriptEngine *engine, int funcId)
 			: CallerBase(engine, funcId)
 		{}
