@@ -62,18 +62,16 @@ namespace ScriptUtils { namespace Calling
 		*/
 		CallerBase()
 			: ok(false), obj(NULL), funcId(-1), ctx(NULL),
-			throwOnException(false),
-			ScriptExceptionSignal(new exception_signal),
-			LineSignal(new line_signal)
+			throwOnException(false)
+			//ScriptExceptionSignal(new exception_signal),
+			//LineSignal(new line_signal)
 		{
 		}
 
 		//! Constructor for object methods
 		CallerBase(asIScriptObject *obj, const char *decl)
 			: obj(obj), decl(decl), ok(true),
-			throwOnException(false),
-			ScriptExceptionSignal(new exception_signal),
-			LineSignal(new line_signal)
+			throwOnException(false)
 		{
 			asIScriptEngine *engine = obj->GetEngine();
 
@@ -91,9 +89,7 @@ namespace ScriptUtils { namespace Calling
 		//! Constructor for global methods (functions)
 		CallerBase(asIScriptModule *module, const char *decl)
 			: obj(NULL), decl(decl), ok(true),
-			throwOnException(false),
-			ScriptExceptionSignal(new exception_signal),
-			LineSignal(new line_signal)
+			throwOnException(false)
 		{
 			asIScriptEngine *engine = module->GetEngine();
 
@@ -108,14 +104,12 @@ namespace ScriptUtils { namespace Calling
 		//! Constructor for global methods (functions)
 		CallerBase(asIScriptEngine *engine, int funcId)
 			: obj(NULL), funcId(funcId), ok(true),
-			throwOnException(false),
-			ScriptExceptionSignal(new exception_signal),
-			LineSignal(new line_signal)
+			throwOnException(false)
 		{
 			ctx = engine->CreateContext();
 
-			if (check_asreturn(funcId))
-				decl = engine->GetFunctionDescriptorById(funcId)->GetDeclaration();
+			//if (check_asreturn(funcId))
+			//	decl = engine->GetFunctionDescriptorById(funcId)->GetDeclaration();
 
 			check_asreturn( ctx->Prepare(funcId) );
 		}
@@ -317,16 +311,22 @@ namespace ScriptUtils { namespace Calling
 		//! Connects a line callback slot
 		boost::signals2::connection ConnectLineCallback(script_callback_fn fn)
 		{
-			if (LineSignal->empty())
+			if (!LineSignal)
+			{
+				LineSignal = std::make_shared<line_signal>();
 				ctx->SetLineCallback(asFUNCTION(CallerLineCallback), LineSignal.get(), asCALL_CDECL);
+			}
 			return LineSignal->connect(fn);
 		}
 
 		//! Connects an exception callback
 		boost::signals2::connection ConnectExceptionCallback(script_callback_fn fn)
 		{
-			if (ScriptExceptionSignal->empty())
+			if (!ScriptExceptionSignal)
+			{
+				ScriptExceptionSignal = std::make_shared<exception_signal>();
 				ctx->SetExceptionCallback(asFUNCTION(CallerExceptionCallback), ScriptExceptionSignal.get(), asCALL_CDECL);
+			}
 			return ScriptExceptionSignal->connect(fn);
 		}
 
