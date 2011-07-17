@@ -122,6 +122,18 @@ namespace ScriptUtils { namespace Calling
 			return caller;
 		}
 
+		Caller& operator =(const Caller &other)
+		{
+			CallerBase::operator=(other);
+			return *this;
+		}
+
+		Caller& operator =(Caller &&other)
+		{
+			CallerBase::operator=(std::move(other));
+			return *this;
+		}
+
 		operator safe_bool() const
 		{
 			return is_ok() ? &Caller::this_type_does_not_support_comparisons : 0;

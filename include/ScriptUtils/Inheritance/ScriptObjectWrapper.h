@@ -96,19 +96,19 @@ namespace ScriptUtils { namespace Inheritance
 		{
 			if (_obj == NULL)
 				return Calling::Caller();
-			//caller_map::iterator _where = m_Callers.find(decl);
-			//if (_where == m_Callers.end())
-			//{
-			//	Calling::Caller caller(_obj, decl.c_str());
-			//	m_Callers[decl] = caller;
 
-			//	return caller;
-			//}
-			//else
-			//{
-			//	return (_where->second);
-			//}
-			return Calling::Caller(_obj, decl.c_str());
+			auto _where = m_Callers.find(decl);
+			if (_where == m_Callers.end())
+			{
+				Calling::Caller caller(_obj, decl.c_str());
+				m_Callers[decl] = caller.get_funcid();
+
+				return caller;
+			}
+			else
+			{
+				return Calling::Caller::CallerForMethodFuncId(_obj, _where->second);
+			}
 		}
 
 	protected:
@@ -117,13 +117,14 @@ namespace ScriptUtils { namespace Inheritance
 			_obj = obj;
 			if (obj != NULL)
 				obj->AddRef();
+			m_Callers.clear();
 		}
 		asIScriptObject * _obj;
 		std::string _iface;
 
 	private:
 		//typedef std::tr1::shared_ptr<Calling::Caller> CallerPtr;
-		typedef std::tr1::unordered_map<std::string, Calling::Caller> caller_map;
+		typedef std::tr1::unordered_map<std::string, int> caller_map;
 
 		//! Prevent copying
 		ScriptObjectWrapper(const ScriptObjectWrapper &);
