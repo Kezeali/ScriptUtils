@@ -37,7 +37,7 @@ namespace ScriptUtils { namespace Calling
 	//{
 	//public:
 	//	CallerContextCallbacks(CallerBase *target)
-	//		: m_Targer(target)
+	//		: m_Target(target)
 	//	{}
 	//	//! Default line callback fn. - Fires LineSignal
 	//	void LineCallback(asIScriptContext *ctx);
@@ -45,7 +45,7 @@ namespace ScriptUtils { namespace Calling
 	//	void ExceptionCallback(asIScriptContext *ctx);
 
 	//private:
-	//	CallerBase *m_Targer;
+	//	CallerBase *m_Target;
 	//};
 
 	void CallerLineCallback(asIScriptContext *ctx, void *obj);
@@ -300,6 +300,11 @@ namespace ScriptUtils { namespace Calling
 			throwOnException = should_throw;
 		}
 
+		asEContextState GetState() const
+		{
+			return ctx->GetState();
+		}
+
 		typedef boost::function<void (asIScriptContext*)> script_callback_fn;
 
 		typedef boost::signals2::signal<void (asIScriptContext*)> line_signal;
@@ -328,6 +333,12 @@ namespace ScriptUtils { namespace Calling
 				ctx->SetExceptionCallback(asFUNCTION(CallerExceptionCallback), ScriptExceptionSignal.get(), asCALL_CDECL);
 			}
 			return ScriptExceptionSignal->connect(fn);
+		}
+
+		//! Returns the script context used by this Caller
+		asIScriptContext* get_ctx() const
+		{
+			return ctx;
 		}
 
 		//! Sets the given arg
