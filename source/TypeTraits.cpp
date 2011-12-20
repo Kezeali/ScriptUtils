@@ -44,7 +44,7 @@ namespace ScriptUtils { namespace Inheritance
 	bool implements(asIObjectType *implementor, asIObjectType *interface)
 	{
 		asIObjectType *interfaceType = implementor->GetInterface(0);
-		for (int i = 0; i < implementor->GetInterfaceCount(); interfaceType = implementor->GetInterface(i++))
+		for (unsigned int i = 0; i < implementor->GetInterfaceCount(); interfaceType = implementor->GetInterface(i++))
 		{
 			if (std::strcmp(interfaceType->GetName(), implementor->GetName()) == 0)
 			{
@@ -75,7 +75,7 @@ namespace ScriptUtils { namespace Inheritance
 		while (type != NULL)
 		{
 			asIObjectType *interfaceType = type->GetInterface(0);
-			for (int i = 0; i < type->GetInterfaceCount(); interfaceType = type->GetInterface(i++))
+			for (unsigned int i = 0; i < type->GetInterfaceCount(); interfaceType = type->GetInterface(i++))
 			{
 				if (std::strcmp(interfaceType->GetName(), interface->GetName()) == 0)
 				{
@@ -95,7 +95,7 @@ namespace ScriptUtils { namespace Inheritance
 		while (type != NULL)
 		{
 			asIObjectType *interfaceType = type->GetInterface(0);
-			for (int i = 0; i < type->GetInterfaceCount(); interfaceType = type->GetInterface(i++))
+			for (unsigned int i = 0; i < type->GetInterfaceCount(); interfaceType = type->GetInterface(i++))
 			{
 				if (std::strcmp(interfaceType->GetName(), interface->GetName()) == 0)
 				{
