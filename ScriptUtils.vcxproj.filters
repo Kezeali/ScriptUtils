@@ -8,9 +8,6 @@
     <Filter Include="Header Files\Calling">
       <UniqueIdentifier>{d8b0f692-b5c9-4fb4-8888-da34a9de9b5d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Engine">
-      <UniqueIdentifier>{d4776fd5-f3b4-4f5b-ae4a-79b04d1ab49f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Inheritance">
       <UniqueIdentifier>{c1660cd6-3520-450e-9f43-d395f07e7c33}</UniqueIdentifier>
     </Filter>

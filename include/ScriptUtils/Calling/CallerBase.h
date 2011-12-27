@@ -358,6 +358,23 @@ namespace ScriptUtils { namespace Calling
 		//	ctx->SetArgObject(arg, (void*)t);
 		//}
 
+		int set_arg(asUINT arg, asDWORD t)
+		{
+			return ctx->SetArgDWord(arg, t);
+		}
+		int set_arg(asUINT arg, asQWORD t)
+		{
+			return ctx->SetArgQWord(arg, t);
+		}
+		int set_arg(asUINT arg, float t)
+		{
+			return ctx->SetArgFloat(arg, t);
+		}
+		int set_arg(asUINT arg, double t)
+		{
+			return ctx->SetArgDouble(arg, t);
+		}
+
 	protected:
 		//! Called after each script line is executed
 		//! \remarks This is a shared_ptr so that it can be shared between multiple Caller objects that reference the same context
@@ -422,30 +439,6 @@ namespace ScriptUtils { namespace Calling
 	{
 		CallerBase::exception_signal *sig = static_cast<CallerBase::exception_signal*>( obj );
 		(*sig)(ctx);
-	}
-
-	template<>
-	int CallerBase::set_arg(asUINT arg, asDWORD t)
-	{
-		return ctx->SetArgDWord(arg, t);
-	}
-
-	template<>
-	int CallerBase::set_arg(asUINT arg, asQWORD t)
-	{
-		return ctx->SetArgQWord(arg, t);
-	}
-
-	template<>
-	int CallerBase::set_arg(asUINT arg, float t)
-	{
-		return ctx->SetArgFloat(arg, t);
-	}
-
-	template<>
-	int CallerBase::set_arg(asUINT arg, double t)
-	{
-		return ctx->SetArgDouble(arg, t);
 	}
 
 }}
