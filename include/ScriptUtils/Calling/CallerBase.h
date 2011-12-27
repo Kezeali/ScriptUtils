@@ -48,9 +48,9 @@ namespace ScriptUtils { namespace Calling
 	//	CallerBase *m_Target;
 	//};
 
-	void CallerLineCallback(asIScriptContext *ctx, void *obj);
+	static void CallerLineCallback(asIScriptContext *ctx, void *obj);
 
-	void CallerExceptionCallback(asIScriptContext *ctx, void *obj);
+	static void CallerExceptionCallback(asIScriptContext *ctx, void *obj);
 
 	//! Base class for callers
 	class CallerBase
@@ -279,11 +279,11 @@ namespace ScriptUtils { namespace Calling
 		}
 
 		//! Sets the object for this caller (if it wasn't set before, or needs to be changed)
-		bool set_object(asIScriptObject *obj)
+		bool set_object(asIScriptObject *_obj)
 		{
 			//if (obj != NULL)
 			//	obj->Release();
-			obj = obj;
+			obj = _obj;
 			//if (obj != NULL)
 			//	obj->AddRef();
 			if (ctx->GetState() & asEXECUTION_PREPARED)
@@ -358,30 +358,6 @@ namespace ScriptUtils { namespace Calling
 		//	ctx->SetArgObject(arg, (void*)t);
 		//}
 
-		template <>
-		int set_arg(asUINT arg, asDWORD t)
-		{
-			return ctx->SetArgDWord(arg, t);
-		}
-
-		template <>
-		int set_arg(asUINT arg, asQWORD t)
-		{
-			return ctx->SetArgQWord(arg, t);
-		}
-
-		template <>
-		int set_arg(asUINT arg, float t)
-		{
-			return ctx->SetArgFloat(arg, t);
-		}
-
-		template <>
-		int set_arg(asUINT arg, double t)
-		{
-			return ctx->SetArgDouble(arg, t);
-		}
-
 	protected:
 		//! Called after each script line is executed
 		//! \remarks This is a shared_ptr so that it can be shared between multiple Caller objects that reference the same context
@@ -446,6 +422,30 @@ namespace ScriptUtils { namespace Calling
 	{
 		CallerBase::exception_signal *sig = static_cast<CallerBase::exception_signal*>( obj );
 		(*sig)(ctx);
+	}
+
+	template<>
+	int CallerBase::set_arg(asUINT arg, asDWORD t)
+	{
+		return ctx->SetArgDWord(arg, t);
+	}
+
+	template<>
+	int CallerBase::set_arg(asUINT arg, asQWORD t)
+	{
+		return ctx->SetArgQWord(arg, t);
+	}
+
+	template<>
+	int CallerBase::set_arg(asUINT arg, float t)
+	{
+		return ctx->SetArgFloat(arg, t);
+	}
+
+	template<>
+	int CallerBase::set_arg(asUINT arg, double t)
+	{
+		return ctx->SetArgDouble(arg, t);
 	}
 
 }}

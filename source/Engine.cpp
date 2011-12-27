@@ -3,7 +3,7 @@
 * By Elliot Hayward
 */
 
-#include "../include/Engine/Engine.h"
+#include "../include/ScriptUtils/Engine/Engine.h"
 
 namespace ScriptUtils
 {

@@ -172,7 +172,7 @@ namespace ScriptUtils { namespace Calling
 
 #define repeat_set_arg(z, n, text) checkSetArgReturn(set_arg(n, a ## n), n, a##n);
 
-#define BOOST_PP_ITERATION_PARAMS_1 (3, (1, SCRIPTCALL_NUMPARAMS, "Caller.h"))
+#define BOOST_PP_ITERATION_PARAMS_1 (3, (1, SCRIPTCALL_NUMPARAMS, "ScriptUtils/Calling/Caller.h"))
 #include BOOST_PP_ITERATE()
 
 #undef repeat_set_arg
