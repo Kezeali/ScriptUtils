@@ -83,8 +83,8 @@ namespace ScriptUtils { namespace Inheritance
 		};
 
 	protected:
-		//typedef std::tr1::unordered_set<std::string> typename_set;
-		typedef std::tr1::unordered_set<std::string> inherited_decl_set;
+		//typedef std::unordered_set<std::string> typename_set;
+		typedef std::unordered_set<std::string> inherited_decl_set;
 		// Interface (comma seperated) list tokenizer
 		typedef boost::char_separator<char> char_sep_func;
 		typedef boost::tokenizer<char_sep_func> char_sep_tokenizer;

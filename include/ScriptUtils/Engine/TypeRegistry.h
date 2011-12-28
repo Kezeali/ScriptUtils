@@ -17,7 +17,7 @@ namespace ScriptUtils
 
 	struct TypeRegistry
 	{
-		typedef std::tr1::unordered_map<std::type_info, int> registry_type;
+		typedef std::unordered_map<std::type_info, int> registry_type;
 		registry_type _Registry;
 
 		template <class T>
