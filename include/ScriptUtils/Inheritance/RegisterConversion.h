@@ -41,10 +41,14 @@ namespace ScriptUtils { namespace Inheritance
 		r = engine->RegisterObjectBehaviour(base.c_str(), asBEHAVE_REF_CAST,
 			(derived+"@ f()").c_str(), asFUNCTION((convert_ref<_Base, _Derived>)),
 			asCALL_CDECL_OBJLAST);
+		if (r < 0)
+			throw Exception("Failed to register script cast fn. [cast<" + derived + ">(" + base + ")]");
 
 		r = engine->RegisterObjectBehaviour(derived.c_str(), asBEHAVE_IMPLICIT_REF_CAST,
 			(base+"@ f()").c_str(), asFUNCTION((convert_ref<_Derived, _Base>)),
 			asCALL_CDECL_OBJLAST);
+		if (r < 0)
+			throw Exception("Failed to register script implicit cast from " + derived + " to " + base + "");
 	}
 
 }}

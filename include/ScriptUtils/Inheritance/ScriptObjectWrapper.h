@@ -123,8 +123,8 @@ namespace ScriptUtils { namespace Inheritance
 		std::string _iface;
 
 	private:
-		//typedef std::tr1::shared_ptr<Calling::Caller> CallerPtr;
-		typedef std::tr1::unordered_map<std::string, int> caller_map;
+		//typedef std::shared_ptr<Calling::Caller> CallerPtr;
+		typedef std::unordered_map<std::string, int> caller_map;
 
 		//! Prevent copying
 		ScriptObjectWrapper(const ScriptObjectWrapper &);
