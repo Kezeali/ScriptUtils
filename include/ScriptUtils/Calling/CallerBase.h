@@ -33,21 +33,6 @@ namespace ScriptUtils { namespace Calling
 		CallHelper(T t) : element(t) {}
 	};
 
-	//class CallerContextCallbacks
-	//{
-	//public:
-	//	CallerContextCallbacks(CallerBase *target)
-	//		: m_Target(target)
-	//	{}
-	//	//! Default line callback fn. - Fires LineSignal
-	//	void LineCallback(asIScriptContext *ctx);
-	//	//! Default exception callback fn. - Fires ScriptExceptionSignal
-	//	void ExceptionCallback(asIScriptContext *ctx);
-
-	//private:
-	//	CallerBase *m_Target;
-	//};
-
 	static void CallerLineCallback(asIScriptContext *ctx, void *obj);
 
 	static void CallerExceptionCallback(asIScriptContext *ctx, void *obj);
@@ -348,15 +333,20 @@ namespace ScriptUtils { namespace Calling
 		template <typename T>
 		int set_arg(asUINT arg, T t)
 		{
-			new (ctx->GetAddressOfArg(arg)) CallHelper<T>(t);
-			return 0;
+			if (ctx->GetAddressOfArg(arg) != nullptr)
+			{
+				new (ctx->GetAddressOfArg(arg)) CallHelper<T>(t);
+				return 0;
+			}
+			else
+				return asINVALID_ARG;
 		}
 
-		//template <typename T>
-		//void set_arg(asUINT arg, T* t)
-		//{
-		//	ctx->SetArgObject(arg, (void*)t);
-		//}
+		template <typename T>
+		int set_arg(asUINT arg, T* t)
+		{
+			return ctx->SetArgAddress(arg, (void*)t);
+		}
 
 		int set_arg(asUINT arg, asDWORD t)
 		{
