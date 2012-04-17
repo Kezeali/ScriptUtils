@@ -25,7 +25,7 @@ namespace ScriptUtils { namespace Calling
 
 	//! Throws if the given return value of a SetArgX Fn indicates failure
 	template <typename T>
-	void checkSetArgReturn(int r, asUINT arg, const T& obj)
+	inline void checkSetArgReturn(int r, asUINT arg, const T& obj)
 	{
 		if (r == asCONTEXT_NOT_PREPARED)
 		{

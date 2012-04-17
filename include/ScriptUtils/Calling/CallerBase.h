@@ -20,17 +20,19 @@
 namespace ScriptUtils { namespace Calling
 {
 
-	//! Converts data
+	//! CallHelper
 	/*!
 	* From SiCrane's code, not exactly sure why this was
-	* used over any other type-casting method... But I
-	* trust it.
+	* used, but I guess it's supposed to work something
+	* like std::reference_wrapper (maybe?)
 	*/
 	template <typename T>
 	struct CallHelper
 	{
 		T element;
 		CallHelper(T t) : element(t) {}
+	private:
+		CallHelper(const CallHelper& other) {}
 	};
 
 	static void CallerLineCallback(asIScriptContext *ctx, void *obj);
