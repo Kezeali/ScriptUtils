@@ -376,7 +376,7 @@ namespace ScriptUtils { namespace Calling
 		//script_exception_callback_fn OnScriptException;
 
 		//! Executes the script method
-		void execute(void)
+		void execute()
 		{
 			// Make sure there is a valid ctx
 			if (ctx == nullptr || ctx->GetState() != asEXECUTION_PREPARED)
@@ -397,7 +397,7 @@ namespace ScriptUtils { namespace Calling
 			}
 		}
 
-		void* return_address(void)
+		void* return_address()
 		{
 			return ctx->GetAddressOfReturnValue();
 		}
