@@ -15,17 +15,7 @@ namespace ScriptUtils { namespace Inheritance
 
 	inline bool is_base_of(asIObjectType *base, asIObjectType *derived)
 	{
-		asIObjectType *baseType = derived;
-		while (baseType != NULL)
-		{
-			// See whether the base type of derrived is the type we are looking for
-			if (baseType == base)
-				return true;
-
-			baseType = baseType->GetBaseType();
-		}
-
-		return false;
+		return derived->DerivesFrom(base);
 	}
 
 	inline bool is_base_of(asIScriptModule *module, const char * base_name, const char * derived_name)
