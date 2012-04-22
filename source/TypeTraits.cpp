@@ -21,7 +21,7 @@ namespace ScriptUtils { namespace Inheritance
 		while (baseType != NULL)
 		{
 			// See whether the base type of derrived is the type we are looking for
-			if (std::strcmp(baseType->GetName(), base->GetName()) == 0)
+			if (baseType == base)
 				return true;
 
 			baseType = baseType->GetBaseType();
@@ -43,10 +43,11 @@ namespace ScriptUtils { namespace Inheritance
 
 	bool implements(asIObjectType *implementor, asIObjectType *interface)
 	{
-		asIObjectType *interfaceType = implementor->GetInterface(0);
-		for (unsigned int i = 0; i < implementor->GetInterfaceCount(); interfaceType = implementor->GetInterface(i++))
+		asIObjectType *iface = implementor->GetInterface(0);
+		for (unsigned int i = 0; i < implementor->GetInterfaceCount(); ++i)
 		{
-			if (std::strcmp(interfaceType->GetName(), implementor->GetName()) == 0)
+			iface = implementor->GetInterface(i);
+			if (iface == interface)
 			{
 				return true;
 			}
@@ -69,15 +70,16 @@ namespace ScriptUtils { namespace Inheritance
 		return implements(implementor, interface);
 	}
 
-	bool base_implements(asIObjectType *derived, asIObjectType *interface)
+	bool base_implements(asIObjectType *derived, asIObjectType *expected_interface)
 	{
 		asIObjectType *type = derived;
 		while (type != NULL)
 		{
 			asIObjectType *interfaceType = type->GetInterface(0);
-			for (unsigned int i = 0; i < type->GetInterfaceCount(); interfaceType = type->GetInterface(i++))
+			for (unsigned int i = 0; i < type->GetInterfaceCount(); ++i)
 			{
-				if (std::strcmp(interfaceType->GetName(), interface->GetName()) == 0)
+				interfaceType = type->GetInterface(i);
+				if (interfaceType == expected_interface)
 				{
 					return true;
 				}
@@ -95,9 +97,10 @@ namespace ScriptUtils { namespace Inheritance
 		while (type != NULL)
 		{
 			asIObjectType *interfaceType = type->GetInterface(0);
-			for (unsigned int i = 0; i < type->GetInterfaceCount(); interfaceType = type->GetInterface(i++))
+			for (unsigned int i = 0; i < type->GetInterfaceCount(); ++i)
 			{
-				if (std::strcmp(interfaceType->GetName(), interface->GetName()) == 0)
+				interfaceType = type->GetInterface(i);
+				if (interfaceType == interface)
 				{
 					return type;
 				}
@@ -106,7 +109,7 @@ namespace ScriptUtils { namespace Inheritance
 			type = type->GetBaseType();
 		}
 
-		return false;
+		return NULL;
 	}
 
 }}
