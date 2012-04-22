@@ -17,11 +17,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\TypeTraits.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="include\ScriptUtils\Calling\Caller.h">
       <Filter>Header Files\Calling</Filter>
     </ClInclude>

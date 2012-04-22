@@ -144,9 +144,6 @@
     <Lib />
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="source\TypeTraits.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="include\ScriptUtils\Exception.h" />
     <ClInclude Include="include\ScriptUtils\ScriptUtils.h" />
     <ClInclude Include="include\ScriptUtils\Calling\Caller.h" />
