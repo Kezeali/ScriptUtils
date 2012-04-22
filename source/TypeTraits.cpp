@@ -9,8 +9,6 @@
 //#include "../include/ScriptUtils/Exception.h"
 #include "../include/ScriptUtils/Inheritance/TypeTraits.h"
 
-#include <cstring>
-
 
 namespace ScriptUtils { namespace Inheritance
 {
@@ -43,17 +41,7 @@ namespace ScriptUtils { namespace Inheritance
 
 	bool implements(asIObjectType *implementor, asIObjectType *interface)
 	{
-		asIObjectType *iface = implementor->GetInterface(0);
-		for (unsigned int i = 0; i < implementor->GetInterfaceCount(); ++i)
-		{
-			iface = implementor->GetInterface(i);
-			if (iface == interface)
-			{
-				return true;
-			}
-		}
-
-		return false;
+		return implementor->Implements(interface);
 	}
 
 	bool implements(asIScriptModule *module, const char *implementor_name, const char *interface_name)
@@ -70,43 +58,29 @@ namespace ScriptUtils { namespace Inheritance
 		return implements(implementor, interface);
 	}
 
-	bool base_implements(asIObjectType *derived, asIObjectType *expected_interface)
+	bool base_implements(asIObjectType *derived, asIObjectType *interface)
 	{
-		asIObjectType *type = derived;
-		while (type != NULL)
+		asIObjectType *baseType = derived;
+		while (baseType)
 		{
-			asIObjectType *interfaceType = type->GetInterface(0);
-			for (unsigned int i = 0; i < type->GetInterfaceCount(); ++i)
-			{
-				interfaceType = type->GetInterface(i);
-				if (interfaceType == expected_interface)
-				{
-					return true;
-				}
-			}
+			if (implements(baseType, interface))
+				return true;
 
-			type = type->GetBaseType();
+			baseType = baseType->GetBaseType();
 		}
 
 		return false;
 	}
 
-	asIObjectType * get_base_implementor(asIObjectType *derived, asIObjectType *interface)
+	asIObjectType* get_base_implementor(asIObjectType *derived, asIObjectType *interface)
 	{
-		asIObjectType *type = derived;
-		while (type != NULL)
+		asIObjectType *baseType = derived;
+		while (baseType)
 		{
-			asIObjectType *interfaceType = type->GetInterface(0);
-			for (unsigned int i = 0; i < type->GetInterfaceCount(); ++i)
-			{
-				interfaceType = type->GetInterface(i);
-				if (interfaceType == interface)
-				{
-					return type;
-				}
-			}
+			if (implements(baseType, interface))
+				return baseType;
 
-			type = type->GetBaseType();
+			baseType = baseType->GetBaseType();
 		}
 
 		return NULL;
