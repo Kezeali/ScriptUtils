@@ -89,35 +89,75 @@ namespace ScriptUtils { namespace Calling
 			: CallerBase(std::move(other))
 		{}
 
-		//! Constructor: for object methods
-		Caller(asIScriptObject *obj, const char *decl)
-			: CallerBase(obj, decl)
+		//! Constructor for object methods
+		Caller(asIScriptContext *context, asIScriptObject *obj, asIScriptFunction* function)
+			: CallerBase(context, obj, function)
 		{}
 
-		//! Constructor: for global functions
-		Caller(asIScriptModule *module, const char *decl)
-			: CallerBase(module, decl)
+		//! Constructor
+		Caller(asIScriptContext *context, asIScriptFunction* function)
+			: CallerBase(context, function)
 		{}
+
+		//! Creates a caller for a global method
+		static Caller Create(asIScriptEngine *engine, const std::string& method_decl)
+		{
+			auto function = engine->GetGlobalFunctionByDecl(method_decl.c_str());
+
+			return Caller(engine->CreateContext(), function);
+		}
+
+		//! Creates a caller for a global method
+		static Caller Create(asIScriptModule *module, const std::string& method_decl)
+		{
+			auto function = module->GetFunctionByDecl(method_decl.c_str());
+
+			return Caller(module->GetEngine()->CreateContext(), function);
+		}
+
+		//! Creates a caller for an object method
+		static Caller Create(asIScriptObject *object, const std::string& method_decl)
+		{
+			auto type = object->GetObjectType();
+			auto method = type->GetMethodByDecl(method_decl.c_str());
+
+			return Caller(type->GetEngine()->CreateContext(), object, method);
+		}
+
+		//! Creates a caller for an object method
+		static Caller Create(asIScriptContext* context, asIScriptObject *object, const std::string& method_decl)
+		{
+			auto type = object->GetObjectType();
+			auto method = type->GetMethodByDecl(method_decl.c_str());
+
+			return Caller(context, object, method);
+		}
 
 		//! Creates a caller for a factory fn.
 		static Caller FactoryCaller(asIObjectType *type, const std::string &params)
 		{
-			std::string type_name(type->GetName());
-			int factoryId = type->GetFactoryIdByDecl((type_name+"@ "+type_name+"("+params+")").c_str());
+			return FactoryCaller(type->GetEngine()->CreateContext(), type, params);
+		}
 
-			return Caller(type->GetEngine(), factoryId);
+		//! Creates a caller for a factory fn.
+		static Caller FactoryCaller(asIScriptContext* ctx, asIObjectType *type, const std::string &params)
+		{
+			std::string type_name(type->GetName());
+			auto factory = type->GetFactoryByDecl((type_name+"@ "+type_name+"("+params+")").c_str());
+
+			return Caller(ctx, factory);
 		}
 
 		//! Creates a caller for a global fn. for which the ID is known
 		static Caller CallerForGlobalFuncId(asIScriptEngine *engine, int funcId)
 		{
-			return Caller(engine, funcId);
+			return Caller(engine->CreateContext(), engine->GetFunctionById(funcId));
 		}
 
 		//! Creates a object method for which the ID is known
 		static Caller CallerForMethodFuncId(asIScriptObject *obj, int funcId)
 		{
-			Caller caller(obj->GetEngine(), funcId);
+			Caller caller(obj->GetEngine()->CreateContext(), obj->GetEngine()->GetFunctionById(funcId));
 			caller.set_object(obj);
 			return caller;
 		}
@@ -176,11 +216,6 @@ namespace ScriptUtils { namespace Calling
 #include BOOST_PP_ITERATE()
 
 #undef repeat_set_arg
-
-	private:
-		Caller(asIScriptEngine *engine, int funcId)
-			: CallerBase(engine, funcId)
-		{}
 	};
 
 }} // namespace

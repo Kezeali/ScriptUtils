@@ -48,65 +48,37 @@ namespace ScriptUtils { namespace Calling
 		* Constructs an empty Caller
 		*/
 		CallerBase()
-			: ok(false), obj(NULL), funcId(-1), ctx(NULL),
+			: ctx(nullptr), obj(nullptr), func(nullptr), ok(false),
 			throwOnException(false)
-			//ScriptExceptionSignal(new exception_signal),
-			//LineSignal(new line_signal)
 		{
 		}
 
-		//! Constructor for object methods
-		CallerBase(asIScriptObject *obj, const char *decl)
-			: obj(obj), decl(decl), ok(true),
+		//! Constructor for class methods
+		CallerBase(asIScriptContext *context, asIScriptObject* object, asIScriptFunction* function)
+			: ctx(context), obj(object), func(function), ok(true),
 			throwOnException(false)
 		{
-			asIScriptEngine *engine = obj->GetEngine();
+			ctx->AddRef();
 
-			ctx = engine->CreateContext();
-
-			asIObjectType *type = obj->GetObjectType();
-			funcId = type->GetMethodIdByDecl(decl);
-			check_asreturn(funcId);
-
-			check_asreturn( ctx->Prepare(funcId) );
-			check_asreturn( ctx->SetObject(obj) );
-			//obj->AddRef();
+			check_asreturn(ctx->Prepare(func));
+			check_asreturn(ctx->SetObject(obj));
 		}
 
 		//! Constructor for global methods (functions)
-		CallerBase(asIScriptModule *module, const char *decl)
-			: obj(NULL), decl(decl), ok(true),
+		CallerBase(asIScriptContext *context, asIScriptFunction* function)
+			: ctx(context), obj(nullptr), func(function), ok(true),
 			throwOnException(false)
 		{
-			asIScriptEngine *engine = module->GetEngine();
+			ctx->AddRef();
 
-			ctx = engine->CreateContext();
-
-			funcId = module->GetFunctionIdByDecl(decl);
-			check_asreturn(funcId);
-
-			check_asreturn( ctx->Prepare(funcId) );
-		}
-
-		//! Constructor for global methods (functions)
-		CallerBase(asIScriptEngine *engine, int funcId)
-			: obj(NULL), funcId(funcId), ok(true),
-			throwOnException(false)
-		{
-			ctx = engine->CreateContext();
-
-			//if (check_asreturn(funcId))
-			//	decl = engine->GetFunctionDescriptorById(funcId)->GetDeclaration();
-
-			check_asreturn( ctx->Prepare(funcId) );
+			check_asreturn(ctx->Prepare(func));
 		}
 
 		//! Copy constructor
 		CallerBase(const CallerBase &other)
 			: ctx(other.ctx),
 			obj(other.obj),
-			decl(other.decl),
-			funcId(other.funcId),
+			func(other.func),
 			ok(other.ok),
 			throwOnException(other.throwOnException),
 			LineSignal(other.LineSignal),
@@ -120,9 +92,9 @@ namespace ScriptUtils { namespace Calling
 					ok = false;
 				else
 				{
-					check_asreturn( ctx->Prepare(funcId) );
+					check_asreturn(ctx->Prepare(func));
 					if (obj != nullptr)
-						check_asreturn( ctx->SetObject(obj) );
+						check_asreturn(ctx->SetObject(obj));
 				}
 			}
 		}
@@ -131,8 +103,7 @@ namespace ScriptUtils { namespace Calling
 		CallerBase(CallerBase &&other)
 			: ctx(other.ctx),
 			obj(other.obj),
-			decl(std::move(other.decl)),
-			funcId(other.funcId),
+			func(other.func),
 			ok(other.ok),
 			throwOnException(other.throwOnException),
 			LineSignal(std::move(other.LineSignal)),
@@ -140,6 +111,7 @@ namespace ScriptUtils { namespace Calling
 		{
 			other.ctx = nullptr;
 			other.obj = nullptr;
+			other.func = nullptr;
 		}
 
 		//! Destructor
@@ -148,16 +120,15 @@ namespace ScriptUtils { namespace Calling
 			release();
 		}
 
-		//! Copy-assignement operator
+		//! Copy-assignment operator
 		CallerBase& operator= (const CallerBase &other)
 		{
 			// Release this object's reference to the context & script object;
 			//  ctx is about to be copied from the other caller
 			release();
 
-			decl = other.decl;
 			obj = other.obj;
-			funcId = other.funcId;
+			func = other.func;
 
 			ok = other.ok;
 
@@ -165,14 +136,14 @@ namespace ScriptUtils { namespace Calling
 			{
 				ctx = other.ctx->GetEngine()->CreateContext();
 
-				if (ctx == nullptr)
-					ok = false;
-				else
+				if (ctx)
 				{
-					check_asreturn( ctx->Prepare(funcId) );
-					if (obj != nullptr)
-						check_asreturn( ctx->SetObject(obj) );
+					check_asreturn(ctx->Prepare(func));
+					if (obj)
+						check_asreturn(ctx->SetObject(obj));
 				}
+				else
+					ok = false;
 			}
 
 			// Signal ptrs
@@ -184,20 +155,19 @@ namespace ScriptUtils { namespace Calling
 			return *this;
 		}
 
-		//! Move-assignement operator
+		//! Move-assignment operator
 		CallerBase& operator= (CallerBase &&other)
 		{
 			// Release this object's reference to the context & script object;
 			//  ctx is about to be taken from the other caller
 			release();
-
-			// Take the other caller's ctx
+			// Swap the uninit-ed ctx & obj with those of the other caller
 			std::swap(ctx, other.ctx);
-
 			std::swap(obj, other.obj);
 
-			decl = std::move(other.decl);
-			funcId = other.funcId;
+			func = other.func;
+			other.func = nullptr;
+
 			ok = other.ok;
 
 			// Signal ptrs
@@ -215,17 +185,16 @@ namespace ScriptUtils { namespace Calling
 			if (ctx != nullptr)
 			{
 				bool heldObject = false;
-				if (ctx->GetState() == asEXECUTION_PREPARED && obj != NULL)
+				if (ctx->GetState() == asEXECUTION_PREPARED && obj != nullptr)
 				{
-					//obj->AddRef();
-					ctx->SetObject(NULL); // Temporarily remove the object from the ctx
+					// Temporarily remove the object from the ctx to prevent an error that seems to happen if a ctx is deallocated with a held object
+					ctx->SetObject(nullptr);
 					heldObject = true;
 				}
 				if (ctx->Release() > 0 && heldObject)
 				{
-					// If this caller wasn't the last reference to the ctx, re-set the object
+					// If this caller wasn't the last reference to the ctx, restore the object 
 					ctx->SetObject(obj);
-					//obj->Release();
 				}
 				ctx = nullptr;
 				obj = nullptr;
@@ -253,7 +222,7 @@ namespace ScriptUtils { namespace Calling
 					return false;
 				}
 
-				check_asreturn( ctx->Prepare(funcId) );
+				check_asreturn( ctx->Prepare(func) );
 				if (obj != nullptr)
 					check_asreturn( ctx->SetObject(obj) );
 			}
@@ -262,16 +231,21 @@ namespace ScriptUtils { namespace Calling
 
 		int get_funcid() const
 		{
-			return funcId;
+			return func->GetId();
+		}
+
+		asIScriptFunction* get_func() const
+		{
+			return func;
 		}
 
 		//! Sets the object for this caller (if it wasn't set before, or needs to be changed)
 		bool set_object(asIScriptObject *_obj)
 		{
-			//if (obj != NULL)
+			//if (obj != nullptr)
 			//	obj->Release();
 			obj = _obj;
-			//if (obj != NULL)
+			//if (obj != nullptr)
 			//	obj->AddRef();
 			if (ctx->GetState() & asEXECUTION_PREPARED)
 			{
@@ -375,23 +349,27 @@ namespace ScriptUtils { namespace Calling
 		exception_signal_ptr ScriptExceptionSignal;
 		//script_exception_callback_fn OnScriptException;
 
+		std::string get_declaration() const
+		{
+			return func ? func->GetDeclaration() : "invalid function object";
+		}
+
 		//! Executes the script method
 		void execute()
 		{
 			// Make sure there is a valid ctx
 			if (ctx == nullptr || ctx->GetState() != asEXECUTION_PREPARED)
-				throw Exception("Can't execute '" + decl + "' - Caller is not prepared to execute");
+				throw Exception("Can't execute " + get_declaration() + " - Caller is not prepared to execute");
 
 			if (!ok)
-				throw Exception("Can't execute '" + decl + "' - Caller is not valid");
+				throw Exception("Can't execute " + get_declaration() + " - Caller is not valid");
 
 			int r = ctx->Execute();
 			if (r < 0)
-				throw Exception("Failed while executing '" + decl + "'");
+				throw Exception("Error while executing " + get_declaration());
 			
 			if (r == asEXECUTION_EXCEPTION)
 			{
-				//! \todo ScriptException with line number, module, section, etc. properties and ctor taking ctx param
 				if (throwOnException)
 					throw Exception(std::string("Script Exception: ") + ctx->GetExceptionString());
 			}
@@ -412,9 +390,8 @@ namespace ScriptUtils { namespace Calling
 
 	private:
 		asIScriptContext* ctx;
-		std::string decl;
 		asIScriptObject* obj;
-		int funcId;
+		asIScriptFunction* func;
 
 		bool ok;
 

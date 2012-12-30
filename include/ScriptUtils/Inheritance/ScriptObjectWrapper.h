@@ -100,7 +100,7 @@ namespace ScriptUtils { namespace Inheritance
 			auto _where = m_Callers.find(decl);
 			if (_where == m_Callers.end())
 			{
-				Calling::Caller caller(_obj, decl.c_str());
+				Calling::Caller caller = Calling::Caller::Create(_obj, decl.c_str());
 				m_Callers[decl] = caller.get_funcid();
 
 				return caller;
