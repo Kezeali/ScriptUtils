@@ -55,23 +55,39 @@ namespace ScriptUtils { namespace Calling
 
 		//! Constructor for class methods
 		CallerBase(asIScriptContext *context, asIScriptObject* object, asIScriptFunction* function)
-			: ctx(context), obj(object), func(function), ok(true),
+			: ctx(context), obj(object), func(function), ok(false),
 			throwOnException(false)
 		{
-			ctx->AddRef();
+			if (ctx != nullptr)
+			{
+				ctx->AddRef();
 
-			check_asreturn(ctx->Prepare(func));
-			check_asreturn(ctx->SetObject(obj));
+				if (func != nullptr)
+				{
+					ok = true;
+
+					check_asreturn(ctx->Prepare(func));
+					check_asreturn(ctx->SetObject(obj));
+				}
+			}
 		}
 
-		//! Constructor for global methods (functions)
+		//! Constructor for global methods
 		CallerBase(asIScriptContext *context, asIScriptFunction* function)
-			: ctx(context), obj(nullptr), func(function), ok(true),
+			: ctx(context), obj(nullptr), func(function), ok(false),
 			throwOnException(false)
 		{
-			ctx->AddRef();
+			if (ctx != nullptr)
+			{
+				ctx->AddRef();
 
-			check_asreturn(ctx->Prepare(func));
+				if (func != nullptr)
+				{
+					ok = true;
+
+					check_asreturn(ctx->Prepare(func));
+				}
+			}
 		}
 
 		//! Copy constructor
