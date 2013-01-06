@@ -7,8 +7,7 @@
 #ifndef H_SCRIPTUTILS_TYPETRAITS
 #define H_SCRIPTUTILS_TYPETRAITS
 
-class asIObjectType;
-class asIScriptModule;
+#include <angelscript.h>
 
 namespace ScriptUtils { namespace Inheritance
 {
@@ -31,9 +30,9 @@ namespace ScriptUtils { namespace Inheritance
 
 	//! Returns true if the given type implements the given interface
 	//! \todo Should this be renamed 'is_interface_of'?
-	inline bool implements(asIObjectType *implementor, asIObjectType *interface)
+	inline bool implements(asIObjectType *implementor, asIObjectType *iface)
 	{
-		return implementor->Implements(interface);
+		return implementor->Implements(iface);
 	}
 
 	//! Returns true if the given type implements the given interface
@@ -44,21 +43,21 @@ namespace ScriptUtils { namespace Inheritance
 		asIObjectType *implementor = engine->GetObjectTypeById( module->GetTypeIdByDecl(implementor_name) );
 		if (implementor == NULL)
 			return false;
-		asIObjectType *interface = engine->GetObjectTypeById( module->GetTypeIdByDecl(interface_name) );
-		if (interface == NULL)
+		asIObjectType *iface = engine->GetObjectTypeById( module->GetTypeIdByDecl(interface_name) );
+		if (iface == NULL)
 			return false;
 
-		return implements(implementor, interface);
+		return implements(implementor, iface);
 	}
 
 	//! Returns true if this type or one of it's bases implements the given interface
 	//! \todo Rename this 'is_interface_of_base'?
-	inline bool base_implements(asIObjectType *derived, asIObjectType *interface)
+	inline bool base_implements(asIObjectType *derived, asIObjectType *iface)
 	{
 		asIObjectType *baseType = derived;
 		while (baseType)
 		{
-			if (implements(baseType, interface))
+			if (implements(baseType, iface))
 				return true;
 
 			baseType = baseType->GetBaseType();
@@ -69,12 +68,12 @@ namespace ScriptUtils { namespace Inheritance
 
 	//! Returns the base class that implements the given interface
 	//! \todo Rename this 'get_base_with_interface'
-	inline asIObjectType* get_base_implementor(asIObjectType *derived, asIObjectType *interface)
+	inline asIObjectType* get_base_implementor(asIObjectType *derived, asIObjectType *iface)
 	{
 		asIObjectType *baseType = derived;
 		while (baseType)
 		{
-			if (implements(baseType, interface))
+			if (implements(baseType, iface))
 				return baseType;
 
 			baseType = baseType->GetBaseType();
